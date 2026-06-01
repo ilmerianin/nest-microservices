@@ -11,6 +11,8 @@ export * from './domain/enums/event-type.enum';
 export * from './domain/interfaces/event-handler.interface';
 export * from './domain/interfaces/event-publisher.interface';
 export * from './domain/interfaces/idempotency-store.interface';
+export * from './domain/tokens/event-publisher.token';
 export * from './utils/event-id.util';
 export * from './utils/event.util';
 export * from './utils/idempotency.util';
+export * from './utils/retry.util';
