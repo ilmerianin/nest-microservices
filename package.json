@@ -7,11 +7,17 @@
   "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
+    "build:producer": "nest build producer",
+    "build:consumer": "nest build consumer",
+    "build:notifier": "nest build notifier",
     "format": "prettier --write \"apps/**/*.ts\" \"libs/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/apps/nest-microservices/main",
+    "start:prod:producer": "node dist/apps/producer/main",
+    "start:prod:consumer": "node dist/apps/consumer/main",
+    "start:prod:notifier": "node dist/apps/notifier/main",
     "start:producer": "nest start producer --watch",
     "start:consumer": "nest start consumer --watch",
     "start:notifier": "nest start notifier --watch",
@@ -24,10 +30,17 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
+    "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
+    "@nestjs/mapped-types": "*",
+    "@nestjs/microservices": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
+    "@nestjs/swagger": "^11.4.4",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -39,6 +52,7 @@
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
     "@types/supertest": "^7.0.0",
+    "@types/uuid": "^10.0.0",
     "eslint": "^9.18.0",
     "eslint-config-prettier": "^10.0.1",
     "eslint-plugin-prettier": "^5.2.2",
@@ -76,6 +90,7 @@
     ],
     "moduleNameMapper": {
       "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1"
-    }
+    },
+    "setupFiles": ["<rootDir>/test/setup-env.ts"]
   }
 }

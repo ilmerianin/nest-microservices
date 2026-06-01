@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
+import { AppConfigModule, notifierEnvValidator } from '@app/common';
 import { NotifierController } from './notifier.controller';
 import { NotifierService } from './notifier.service';
 
 @Module({
-  imports: [],
+  imports: [AppConfigModule.forRoot({ validate: notifierEnvValidator })],
   controllers: [NotifierController],
   providers: [NotifierService],
 })
