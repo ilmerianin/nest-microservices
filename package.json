@@ -1,6 +1,6 @@
 {
   "name": "nest-microservices",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "",
   "author": "",
   "private": true,
@@ -26,7 +26,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/nest-microservices/test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json --runInBand"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -83,7 +83,12 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "apps/**/*.ts",
+      "libs/**/*.ts",
+      "!**/*.spec.ts",
+      "!**/*.e2e-spec.ts",
+      "!**/test/**",
+      "!**/main.ts"
     ],
     "coverageDirectory": "./coverage",
     "testEnvironment": "node",

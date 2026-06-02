@@ -10,6 +10,7 @@ describe('ConsumerController (e2e)', () => {
   const rabbitMqMock = {
     onModuleInit: jest.fn(),
     onModuleDestroy: jest.fn(),
+    isConnected: jest.fn().mockReturnValue(true),
   };
 
   beforeEach(async () => {
@@ -33,5 +34,17 @@ describe('ConsumerController (e2e)', () => {
       .get('/')
       .expect(200)
       .expect('Hello World!');
+  });
+
+  it('GET /health returns ok when dependencies configured', () => {
+    return request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.status).toBe('ok');
+        expect(body.service).toBe('consumer');
+        expect(body.checks.rabbitmq).toBeDefined();
+        expect(body.checks.notifier).toBeDefined();
+      });
   });
 });

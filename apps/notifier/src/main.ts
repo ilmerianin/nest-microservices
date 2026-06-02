@@ -13,8 +13,15 @@ async function bootstrap() {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Notifier API')
-    .setDescription('HTTP API для отправки уведомлений в Telegram')
+    .setDescription(
+      'HTTP API для отправки уведомлений в Telegram через Bot API. ' +
+        'Swagger UI: `/api`',
+    )
     .setVersion('1.0')
+    .addServer('http://localhost:3001', 'Local development')
+    .addServer('http://localhost:3001', 'Docker (port 3001)')
+    .addTag('notifications', 'Отправка уведомлений')
+    .addTag('health', 'Проверка готовности сервиса')
     .build();
   const document = SwaggerModule.createDocument(app, swaggerConfig);
   SwaggerModule.setup('api', app, document);
