@@ -11,6 +11,7 @@ describe('ProducerController (e2e)', () => {
   const publishMock = jest.fn().mockResolvedValue(undefined);
   const publisherMock = {
     publish: publishMock,
+    isConnected: jest.fn().mockReturnValue(true),
     onModuleInit: jest.fn(),
     onModuleDestroy: jest.fn(),
   };
@@ -43,6 +44,17 @@ describe('ProducerController (e2e)', () => {
       .get('/')
       .expect(200)
       .expect('Hello World!');
+  });
+
+  it('GET /health returns ok when RabbitMQ is connected', () => {
+    return request(app.getHttpServer())
+      .get('/health')
+      .expect(200)
+      .expect(({ body }) => {
+        expect(body.status).toBe('ok');
+        expect(body.service).toBe('producer');
+        expect(body.checks.rabbitmq).toBe('up');
+      });
   });
 
   it('POST /events publishes event and returns id', () => {

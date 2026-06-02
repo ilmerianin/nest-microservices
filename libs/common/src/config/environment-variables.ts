@@ -19,5 +19,9 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  TELEGRAM_API_BASE_URL?: string;
+
+  @IsOptional()
+  @IsString()
   NOTIFIER_URL?: string;
 }

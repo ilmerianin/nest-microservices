@@ -70,6 +70,10 @@ export class RabbitMqPublisherService
     await this.connection?.close();
   }
 
+  isConnected(): boolean {
+    return this.connection?.isConnected() ?? false;
+  }
+
   async publish(event: EventDto): Promise<void> {
     const content = Buffer.from(serializeEvent(event));
 

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { AppConfigModule, producerEnvValidator } from '@app/common';
+import { HealthController } from './health/health.controller';
+import { HealthService } from './health/health.service';
 import { ProducerController } from './producer.controller';
 import { ProducerService } from './producer.service';
 import { RabbitMqModule } from './rabbitmq/rabbitmq.module';
@@ -9,7 +11,7 @@ import { RabbitMqModule } from './rabbitmq/rabbitmq.module';
     AppConfigModule.forRoot({ validate: producerEnvValidator }),
     RabbitMqModule,
   ],
-  controllers: [ProducerController],
-  providers: [ProducerService],
+  controllers: [ProducerController, HealthController],
+  providers: [ProducerService, HealthService],
 })
 export class ProducerModule {}

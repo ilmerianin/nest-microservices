@@ -4,11 +4,19 @@ import { NotifierService } from './notifier.service';
 
 describe('NotifierController', () => {
   let notifierController: NotifierController;
+  let notifierService: jest.Mocked<
+    Pick<NotifierService, 'sendNotification' | 'getHello'>
+  >;
 
   beforeEach(async () => {
+    notifierService = {
+      sendNotification: jest.fn().mockResolvedValue(undefined),
+      getHello: jest.fn().mockReturnValue('Hello World!'),
+    };
+
     const app: TestingModule = await Test.createTestingModule({
       controllers: [NotifierController],
-      providers: [NotifierService],
+      providers: [{ provide: NotifierService, useValue: notifierService }],
     }).compile();
 
     notifierController = app.get<NotifierController>(NotifierController);
@@ -21,13 +29,17 @@ describe('NotifierController', () => {
   });
 
   describe('notify', () => {
-    it('returns accepted status', () => {
-      const result = notifierController.notify({
+    it('returns sent status with chatId', async () => {
+      const result = await notifierController.notify({
         chatId: '123',
         text: 'hello',
       });
 
-      expect(result).toEqual({ status: 'accepted' });
+      expect(result).toEqual({ status: 'sent', chatId: '123' });
+      expect(notifierService.sendNotification).toHaveBeenCalledWith({
+        chatId: '123',
+        text: 'hello',
+      });
     });
   });
 });

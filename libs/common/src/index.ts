@@ -1,3 +1,4 @@
+export * from './health/health-response.dto';
 export * from './common.module';
 export * from './common.service';
 export * from './config/app-config.module';

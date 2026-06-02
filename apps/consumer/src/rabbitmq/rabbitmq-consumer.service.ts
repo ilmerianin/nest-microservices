@@ -74,6 +74,10 @@ export class RabbitMqConsumerService implements OnModuleInit, OnModuleDestroy {
     await this.connection?.close();
   }
 
+  isConnected(): boolean {
+    return this.connection?.isConnected() ?? false;
+  }
+
   async handleDelivery(
     message: ConsumeMessage | null,
     channel: ConfirmChannel,
