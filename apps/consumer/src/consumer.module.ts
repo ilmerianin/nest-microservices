@@ -1,11 +1,15 @@
 import { Module } from '@nestjs/common';
 import { AppConfigModule, consumerEnvValidator } from '@app/common';
 import { ConsumerController } from './consumer.controller';
-import { ConsumerService } from './consumer.service';
+import { ConsumerCoreModule } from './consumer-core.module';
+import { RabbitMqModule } from './rabbitmq/rabbitmq.module';
 
 @Module({
-  imports: [AppConfigModule.forRoot({ validate: consumerEnvValidator })],
+  imports: [
+    AppConfigModule.forRoot({ validate: consumerEnvValidator }),
+    ConsumerCoreModule,
+    RabbitMqModule,
+  ],
   controllers: [ConsumerController],
-  providers: [ConsumerService],
 })
 export class ConsumerModule {}

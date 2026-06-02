@@ -11,6 +11,7 @@ import {
   RABBITMQ_EXCHANGE,
   RABBITMQ_QUEUE,
   RABBITMQ_ROUTING_KEY,
+  declareEventTopology,
   serializeEvent,
   withRetry,
 } from '@app/common';
@@ -52,16 +53,16 @@ export class RabbitMqPublisherService
     this.channelWrapper = this.connection.createChannel({
       publishTimeout: 10_000,
       setup: async (channel: ConfirmChannel) => {
-        await channel.assertExchange(RABBITMQ_EXCHANGE, 'topic', {
-          durable: true,
-        });
-        await channel.assertQueue(queue, { durable: true });
-        await channel.bindQueue(queue, RABBITMQ_EXCHANGE, RABBITMQ_ROUTING_KEY);
+        await declareEventTopology(channel, queue);
         this.logger.log(
-          `RabbitMQ topology ready: exchange=${RABBITMQ_EXCHANGE}, queue=${queue}`,
+          `RabbitMQ topology ready: exchange=events, queue=${queue}`,
         );
       },
     });
+
+    this.channelWrapper.on('error', (err) =>
+      this.logger.error(`RabbitMQ channel error: ${err.message}`),
+    );
   }
 
   async onModuleDestroy(): Promise<void> {

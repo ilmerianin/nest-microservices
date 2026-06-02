@@ -19,4 +19,15 @@ describe('NotifierController', () => {
       expect(notifierController.getHello()).toBe('Hello World!');
     });
   });
+
+  describe('notify', () => {
+    it('returns accepted status', () => {
+      const result = notifierController.notify({
+        chatId: '123',
+        text: 'hello',
+      });
+
+      expect(result).toEqual({ status: 'accepted' });
+    });
+  });
 });

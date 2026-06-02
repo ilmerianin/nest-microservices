@@ -9,3 +9,9 @@ export const RABBITMQ_QUEUE = 'events.notifications';
 
 /** Очередь dead-letter для сообщений после исчерпания retry. */
 export const RABBITMQ_DLQ = 'events.notifications.dlq';
+
+/** Routing key для dead-letter очереди. */
+export const RABBITMQ_DLQ_ROUTING_KEY = 'notification.failed';
+
+/** Максимальное число попыток обработки сообщения consumer'ом. */
+export const RABBITMQ_MAX_CONSUME_RETRIES = 3;

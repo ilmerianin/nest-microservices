@@ -1,3 +1,4 @@
+import { ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
@@ -12,6 +13,9 @@ describe('NotifierController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({ whitelist: true, transform: true }),
+    );
     await app.init();
   });
 
@@ -24,5 +28,13 @@ describe('NotifierController (e2e)', () => {
       .get('/')
       .expect(200)
       .expect('Hello World!');
+  });
+
+  it('POST /notify accepts notification payload', () => {
+    return request(app.getHttpServer())
+      .post('/notify')
+      .send({ chatId: '123456789', text: 'Test' })
+      .expect(202)
+      .expect({ status: 'accepted' });
   });
 });

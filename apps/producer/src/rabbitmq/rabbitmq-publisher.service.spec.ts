@@ -34,6 +34,7 @@ describe('RabbitMqPublisherService', () => {
     mockCreateChannel.mockReturnValue({
       publish: mockPublish,
       close: mockChannelClose,
+      on: jest.fn(),
     });
 
     mockConnect.mockReturnValue({

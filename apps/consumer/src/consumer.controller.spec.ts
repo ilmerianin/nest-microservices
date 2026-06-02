@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NOTIFIER_CLIENT } from '@app/common';
 import { ConsumerController } from './consumer.controller';
 import { ConsumerService } from './consumer.service';
 
@@ -8,7 +9,10 @@ describe('ConsumerController', () => {
   beforeEach(async () => {
     const app: TestingModule = await Test.createTestingModule({
       controllers: [ConsumerController],
-      providers: [ConsumerService],
+      providers: [
+        ConsumerService,
+        { provide: NOTIFIER_CLIENT, useValue: { notify: jest.fn() } },
+      ],
     }).compile();
 
     consumerController = app.get<ConsumerController>(ConsumerController);
