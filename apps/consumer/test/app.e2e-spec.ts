@@ -1,24 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
+import { RABBITMQ_CONNECTION_HEALTH } from '@app/contracts';
 import { ConsumerModule } from './../src/consumer.module';
+import { RabbitMqConnectionService } from './../src/rabbitmq/rabbitmq-connection.service';
 import { RabbitMqConsumerService } from './../src/rabbitmq/rabbitmq-consumer.service';
 
 describe('ConsumerController (e2e)', () => {
   let app: INestApplication;
-
-  const rabbitMqMock = {
-    onModuleInit: jest.fn(),
-    onModuleDestroy: jest.fn(),
-    isConnected: jest.fn().mockReturnValue(true),
-  };
 
   beforeEach(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [ConsumerModule],
     })
       .overrideProvider(RabbitMqConsumerService)
-      .useValue(rabbitMqMock)
+      .useValue({ onModuleInit: jest.fn() })
+      .overrideProvider(RabbitMqConnectionService)
+      .useValue({
+        setChannelSetup: jest.fn(),
+        start: jest.fn().mockResolvedValue(undefined),
+        onModuleDestroy: jest.fn(),
+        isConnected: jest.fn().mockReturnValue(true),
+      })
+      .overrideProvider(RABBITMQ_CONNECTION_HEALTH)
+      .useValue({ isConnected: jest.fn().mockReturnValue(true) })
       .compile();
 
     app = moduleFixture.createNestApplication();

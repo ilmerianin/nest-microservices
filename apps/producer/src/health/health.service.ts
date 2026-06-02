@@ -1,15 +1,20 @@
-import { Injectable } from '@nestjs/common';
-import { HealthCheckStatus, HealthResponseDto } from '@app/common';
-import { RabbitMqPublisherService } from '../rabbitmq/rabbitmq-publisher.service';
+import { Inject, Injectable } from '@nestjs/common';
+import {
+  HealthCheckStatus,
+  HealthResponseDto,
+  RABBITMQ_CONNECTION_HEALTH,
+} from '@app/contracts';
+import type { IRabbitMqConnectionHealth } from '@app/contracts';
 
 @Injectable()
 export class HealthService {
   constructor(
-    private readonly rabbitMqPublisherService: RabbitMqPublisherService,
+    @Inject(RABBITMQ_CONNECTION_HEALTH)
+    private readonly rabbitMqHealth: IRabbitMqConnectionHealth,
   ) {}
 
   check(): HealthResponseDto {
-    const rabbitmq: HealthCheckStatus = this.rabbitMqPublisherService.isConnected()
+    const rabbitmq: HealthCheckStatus = this.rabbitMqHealth.isConnected()
       ? 'up'
       : 'down';
 

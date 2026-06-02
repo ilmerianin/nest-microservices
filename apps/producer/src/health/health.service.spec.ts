@@ -1,20 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { RABBITMQ_CONNECTION_HEALTH } from '@app/contracts';
 import { HealthService } from './health.service';
-import { RabbitMqPublisherService } from '../rabbitmq/rabbitmq-publisher.service';
 
 describe('HealthService', () => {
   let service: HealthService;
-  let publisher: { isConnected: jest.Mock };
+  let rabbitMqHealth: { isConnected: jest.Mock };
 
   beforeEach(async () => {
-    publisher = { isConnected: jest.fn() };
+    rabbitMqHealth = { isConnected: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HealthService,
         {
-          provide: RabbitMqPublisherService,
-          useValue: publisher,
+          provide: RABBITMQ_CONNECTION_HEALTH,
+          useValue: rabbitMqHealth,
         },
       ],
     }).compile();
@@ -23,7 +23,7 @@ describe('HealthService', () => {
   });
 
   it('returns ok when RabbitMQ is connected', () => {
-    publisher.isConnected.mockReturnValue(true);
+    rabbitMqHealth.isConnected.mockReturnValue(true);
 
     expect(service.check()).toEqual({
       status: 'ok',
@@ -33,7 +33,7 @@ describe('HealthService', () => {
   });
 
   it('returns error when RabbitMQ is disconnected', () => {
-    publisher.isConnected.mockReturnValue(false);
+    rabbitMqHealth.isConnected.mockReturnValue(false);
 
     expect(service.check()).toEqual({
       status: 'error',

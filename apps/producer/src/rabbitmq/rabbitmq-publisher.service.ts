@@ -8,13 +8,14 @@ import { ConfigService } from '@nestjs/config';
 import {
   EventDto,
   IEventPublisher,
+  IRabbitMqConnectionHealth,
   RABBITMQ_EXCHANGE,
   RABBITMQ_QUEUE,
   RABBITMQ_ROUTING_KEY,
-  declareEventTopology,
   serializeEvent,
   withRetry,
-} from '@app/common';
+} from '@app/contracts';
+import { declareEventTopology } from '@app/rabbitmq';
 import amqp, {
   AmqpConnectionManager,
   ChannelWrapper,
@@ -26,7 +27,7 @@ const PUBLISH_BASE_DELAY_MS = 500;
 
 @Injectable()
 export class RabbitMqPublisherService
-  implements IEventPublisher, OnModuleInit, OnModuleDestroy
+  implements IEventPublisher, IRabbitMqConnectionHealth, OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(RabbitMqPublisherService.name);
   private connection: AmqpConnectionManager | null = null;

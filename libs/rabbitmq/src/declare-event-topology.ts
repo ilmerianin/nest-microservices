@@ -4,7 +4,7 @@ import {
   RABBITMQ_DLQ_ROUTING_KEY,
   RABBITMQ_EXCHANGE,
   RABBITMQ_ROUTING_KEY,
-} from '../domain/constants/rabbitmq.constants';
+} from '@app/contracts';
 
 /** Единое объявление exchange/queue/DLQ для Producer и Consumer. */
 export async function declareEventTopology(

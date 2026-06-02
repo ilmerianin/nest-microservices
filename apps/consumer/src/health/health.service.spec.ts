@@ -1,27 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { RABBITMQ_CONNECTION_HEALTH } from '@app/contracts';
 import { HealthService } from './health.service';
-import { RabbitMqConsumerService } from '../rabbitmq/rabbitmq-consumer.service';
 
 describe('HealthService', () => {
   let service: HealthService;
-  let consumer: { isConnected: jest.Mock };
-  let configGet: jest.Mock;
+  let rabbitMqHealth: { isConnected: jest.Mock };
 
   beforeEach(async () => {
-    consumer = { isConnected: jest.fn() };
-    configGet = jest.fn();
+    rabbitMqHealth = { isConnected: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HealthService,
         {
           provide: ConfigService,
-          useValue: { get: configGet },
+          useValue: { get: jest.fn().mockReturnValue('http://notifier:3001') },
         },
         {
-          provide: RabbitMqConsumerService,
-          useValue: consumer,
+          provide: RABBITMQ_CONNECTION_HEALTH,
+          useValue: rabbitMqHealth,
         },
       ],
     }).compile();
@@ -30,8 +28,7 @@ describe('HealthService', () => {
   });
 
   it('returns ok when RabbitMQ and NOTIFIER_URL are ready', () => {
-    consumer.isConnected.mockReturnValue(true);
-    configGet.mockReturnValue('http://notifier:3001');
+    rabbitMqHealth.isConnected.mockReturnValue(true);
 
     expect(service.check()).toEqual({
       status: 'ok',
@@ -41,8 +38,7 @@ describe('HealthService', () => {
   });
 
   it('returns error when RabbitMQ is disconnected', () => {
-    consumer.isConnected.mockReturnValue(false);
-    configGet.mockReturnValue('http://notifier:3001');
+    rabbitMqHealth.isConnected.mockReturnValue(false);
 
     expect(service.check().status).toBe('error');
     expect(service.check().checks.rabbitmq).toBe('down');

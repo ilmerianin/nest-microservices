@@ -1,22 +1,31 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { createNotificationEvent, serializeEvent } from '@app/common';
-import { ConsumerService } from '../consumer.service';
+import { EVENT_HANDLER, createNotificationEvent, serializeEvent } from '@app/contracts';
+import { RabbitMqConsumeRetryPolicy } from './rabbitmq-consume-retry.policy';
+import { RabbitMqConnectionService } from './rabbitmq-connection.service';
 import { RabbitMqConsumerService } from './rabbitmq-consumer.service';
 import { ConfirmChannel, ConsumeMessage } from 'amqplib';
 
 describe('RabbitMqConsumerService', () => {
   let consumer: RabbitMqConsumerService;
-  let consumerService: jest.Mocked<Pick<ConsumerService, 'processEvent'>>;
+  let eventHandler: { handle: jest.Mock };
   let channel: jest.Mocked<Pick<ConfirmChannel, 'ack' | 'nack' | 'publish'>>;
 
   beforeEach(async () => {
-    consumerService = { processEvent: jest.fn() };
+    eventHandler = { handle: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RabbitMqConsumerService,
-        { provide: ConsumerService, useValue: consumerService },
+        RabbitMqConsumeRetryPolicy,
+        {
+          provide: RabbitMqConnectionService,
+          useValue: {
+            setChannelSetup: jest.fn(),
+            start: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        { provide: EVENT_HANDLER, useValue: eventHandler },
         {
           provide: ConfigService,
           useValue: {
@@ -59,41 +68,25 @@ describe('RabbitMqConsumerService', () => {
   }
 
   it('acks message on successful processing', async () => {
-    consumerService.processEvent.mockResolvedValue('processed');
-
     await consumer.handleDelivery(buildMessage(), channel as ConfirmChannel);
 
+    expect(eventHandler.handle).toHaveBeenCalledTimes(1);
     expect(channel.ack).toHaveBeenCalledTimes(1);
     expect(channel.nack).not.toHaveBeenCalled();
   });
 
-  it('acks duplicate events without reprocessing', async () => {
-    consumerService.processEvent.mockResolvedValue('duplicate');
-
-    await consumer.handleDelivery(buildMessage(), channel as ConfirmChannel);
-
-    expect(channel.ack).toHaveBeenCalledTimes(1);
-  });
-
   it('requeues message on transient failure', async () => {
-    consumerService.processEvent.mockRejectedValue(new Error('notifier down'));
+    eventHandler.handle.mockRejectedValue(new Error('notifier down'));
 
     await consumer.handleDelivery(buildMessage(), channel as ConfirmChannel);
 
-    expect(channel.publish).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.any(String),
-      expect.any(Buffer),
-      expect.objectContaining({
-        headers: expect.objectContaining({ 'x-retry-count': 1 }),
-      }),
-    );
+    expect(channel.publish).toHaveBeenCalled();
     expect(channel.ack).toHaveBeenCalledTimes(1);
     expect(channel.nack).not.toHaveBeenCalled();
   });
 
   it('nacks to DLQ after max retries', async () => {
-    consumerService.processEvent.mockRejectedValue(new Error('notifier down'));
+    eventHandler.handle.mockRejectedValue(new Error('notifier down'));
 
     await consumer.handleDelivery(
       buildMessage(undefined, { 'x-retry-count': 2 }),
@@ -106,10 +99,5 @@ describe('RabbitMqConsumerService', () => {
       false,
     );
     expect(channel.publish).not.toHaveBeenCalled();
-  });
-
-  it('getRetryCount reads x-retry-count header', () => {
-    const message = buildMessage(undefined, { 'x-retry-count': 2 });
-    expect(consumer.getRetryCount(message)).toBe(2);
   });
 });

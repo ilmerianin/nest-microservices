@@ -1,19 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
-import { EventType, NOTIFIER_CLIENT, createNotificationEvent } from '@app/common';
+import {
+  IDEMPOTENCY_STORE,
+  IIdempotencyStore,
+  NOTIFIER_CLIENT,
+  createNotificationEvent,
+} from '@app/common';
 import { ConsumerService } from './consumer.service';
 
 describe('ConsumerService', () => {
   let service: ConsumerService;
   let notifyMock: jest.Mock;
+  let idempotencyStore: jest.Mocked<IIdempotencyStore>;
 
   beforeEach(async () => {
     notifyMock = jest.fn().mockResolvedValue(undefined);
+    idempotencyStore = {
+      hasProcessed: jest.fn().mockReturnValue(false),
+      markProcessed: jest.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ConsumerService,
         { provide: NOTIFIER_CLIENT, useValue: { notify: notifyMock } },
+        { provide: IDEMPOTENCY_STORE, useValue: idempotencyStore },
       ],
     }).compile();
 
@@ -25,10 +35,10 @@ describe('ConsumerService', () => {
       payload: { chatId: '1', text: 'hi' },
     });
 
-    const result = await service.processEvent(event);
+    await service.handle(event);
 
-    expect(result).toBe('processed');
     expect(notifyMock).toHaveBeenCalledWith(event.payload);
+    expect(idempotencyStore.markProcessed).toHaveBeenCalledWith(event.id);
   });
 
   it('skips duplicate events without calling notifier', async () => {
@@ -36,13 +46,12 @@ describe('ConsumerService', () => {
       payload: { chatId: '1', text: 'hi' },
     });
 
-    await service.processEvent(event);
-    notifyMock.mockClear();
+    idempotencyStore.hasProcessed.mockReturnValue(true);
 
-    const result = await service.processEvent(event);
+    await service.handle(event);
 
-    expect(result).toBe('duplicate');
     expect(notifyMock).not.toHaveBeenCalled();
+    expect(idempotencyStore.markProcessed).not.toHaveBeenCalled();
   });
 
   it('does not mark as processed when notifier fails', async () => {
@@ -51,17 +60,7 @@ describe('ConsumerService', () => {
       payload: { chatId: '1', text: 'hi' },
     });
 
-    await expect(service.processEvent(event)).rejects.toThrow('notifier down');
-    expect(service.isAlreadyProcessed(event)).toBe(false);
-  });
-
-  it('duplicate events with same id are detected', () => {
-    const event = createNotificationEvent({
-      payload: { chatId: '1', text: 'hi' },
-    });
-
-    service.markAsProcessed(event);
-    const duplicate = { ...event, type: EventType.NOTIFICATION_REQUESTED };
-    expect(service.isAlreadyProcessed(duplicate)).toBe(true);
+    await expect(service.handle(event)).rejects.toThrow('notifier down');
+    expect(idempotencyStore.markProcessed).not.toHaveBeenCalled();
   });
 });

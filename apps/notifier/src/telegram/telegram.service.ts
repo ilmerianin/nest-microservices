@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { INotificationSender } from '@app/common';
 import { postJson } from './telegram-http.client';
 import {
   TelegramApiError,
@@ -18,7 +19,7 @@ interface TelegramApiResponse {
 }
 
 const MAX_RATE_LIMIT_RETRIES = 3;
-const MAX_NETWORK_RETRIES = 3;
+const MAX_NETWORK_RETRIES = 5;
 const FETCH_TIMEOUT_MS = 15_000;
 const DEFAULT_TELEGRAM_API_BASE_URL = 'https://api.telegram.org';
 
@@ -32,24 +33,29 @@ function isRetryableNetworkError(error: unknown): boolean {
   }
 
   const message = error.message.toLowerCase();
-  const cause = (error as NodeJS.ErrnoException).cause;
+  const errno = error as NodeJS.ErrnoException;
+  const cause = errno.cause;
   const causeCode =
     cause && typeof cause === 'object' && 'code' in cause
       ? String((cause as { code?: string }).code)
       : '';
+  const code = errno.code ?? causeCode;
 
   return (
     message.includes('fetch failed') ||
     message.includes('network') ||
-    causeCode === 'ETIMEDOUT' ||
-    causeCode === 'ENETUNREACH' ||
-    causeCode === 'ECONNREFUSED' ||
-    causeCode === 'EAI_AGAIN'
+    message.includes('econnreset') ||
+    code === 'ETIMEDOUT' ||
+    code === 'ENETUNREACH' ||
+    code === 'ECONNREFUSED' ||
+    code === 'ECONNRESET' ||
+    code === 'EPIPE' ||
+    code === 'EAI_AGAIN'
   );
 }
 
 @Injectable()
-export class TelegramService {
+export class TelegramService implements INotificationSender {
   private readonly logger = new Logger(TelegramService.name);
 
   constructor(private readonly configService: ConfigService) {}
@@ -171,13 +177,15 @@ export class TelegramService {
       'Cannot reach Telegram API. Check internet access, VPN, firewall, or set TELEGRAM_API_BASE_URL to a local Bot API server.';
 
     if (error instanceof Error) {
-      const cause = error.cause;
+      const errno = error as NodeJS.ErrnoException;
+      const cause = errno.cause;
       const causeDetails =
         cause instanceof Error
           ? `${cause.message}${'code' in cause ? ` (${String(cause.code)})` : ''}`
           : undefined;
+      const codeSuffix = errno.code ? ` (${errno.code})` : '';
 
-      const detail = causeDetails ?? error.message;
+      const detail = causeDetails ?? `${error.message}${codeSuffix}`;
       return new TelegramNetworkError(`${baseMessage} Details: ${detail}`);
     }
 

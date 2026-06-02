@@ -150,9 +150,11 @@ describe('TelegramService', () => {
 
     await jest.advanceTimersByTimeAsync(1000);
     await jest.advanceTimersByTimeAsync(2000);
+    await jest.advanceTimersByTimeAsync(4000);
+    await jest.advanceTimersByTimeAsync(8000);
     await expectation;
 
-    expect(postJson).toHaveBeenCalledTimes(3);
+    expect(postJson).toHaveBeenCalledTimes(5);
     jest.useRealTimers();
   });
 

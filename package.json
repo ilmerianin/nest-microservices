@@ -1,6 +1,6 @@
 {
   "name": "nest-microservices",
-  "version": "0.0.6",
+  "version": "1.0.0",
   "description": "",
   "author": "",
   "private": true,
@@ -84,7 +84,8 @@
     },
     "collectCoverageFrom": [
       "apps/**/*.ts",
-      "libs/**/*.ts",
+      "libs/contracts/**/*.ts",
+      "libs/rabbitmq/**/*.ts",
       "!**/*.spec.ts",
       "!**/*.e2e-spec.ts",
       "!**/test/**",
@@ -94,9 +95,13 @@
     "testEnvironment": "node",
     "roots": [
       "<rootDir>/apps/",
-      "<rootDir>/libs/"
+      "<rootDir>/libs/contracts/",
+      "<rootDir>/libs/rabbitmq/",
+      "<rootDir>/libs/common/"
     ],
     "moduleNameMapper": {
+      "^@app/contracts(|/.*)$": "<rootDir>/libs/contracts/src/$1",
+      "^@app/rabbitmq(|/.*)$": "<rootDir>/libs/rabbitmq/src/$1",
       "^@app/common(|/.*)$": "<rootDir>/libs/common/src/$1"
     },
     "setupFiles": [

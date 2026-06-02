@@ -1,32 +1,35 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NOTIFICATION_SENDER } from '@app/common';
 import { NotifierService } from './notifier.service';
-import { TelegramService } from './telegram/telegram.service';
 
 describe('NotifierService', () => {
   let service: NotifierService;
-  let telegramService: jest.Mocked<Pick<TelegramService, 'sendMessage'>>;
+  let sendMessageMock: jest.Mock;
 
   beforeEach(async () => {
-    telegramService = { sendMessage: jest.fn().mockResolvedValue(undefined) };
+    sendMessageMock = jest.fn().mockResolvedValue(undefined);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         NotifierService,
-        { provide: TelegramService, useValue: telegramService },
+        {
+          provide: NOTIFICATION_SENDER,
+          useValue: { sendMessage: sendMessageMock },
+        },
       ],
     }).compile();
 
     service = module.get(NotifierService);
   });
 
-  it('delegates sendNotification to TelegramService', async () => {
+  it('delegates sendNotification to NOTIFICATION_SENDER', async () => {
     await service.sendNotification({ chatId: '99', text: 'hello' });
 
-    expect(telegramService.sendMessage).toHaveBeenCalledWith('99', 'hello');
+    expect(sendMessageMock).toHaveBeenCalledWith('99', 'hello');
   });
 
-  it('propagates Telegram errors', async () => {
-    telegramService.sendMessage.mockRejectedValue(new Error('telegram down'));
+  it('propagates sender errors', async () => {
+    sendMessageMock.mockRejectedValue(new Error('telegram down'));
 
     await expect(
       service.sendNotification({ chatId: '1', text: 'x' }),
